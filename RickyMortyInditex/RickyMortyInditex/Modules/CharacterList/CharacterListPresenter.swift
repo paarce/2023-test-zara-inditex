@@ -19,6 +19,8 @@ class CharacterListPresenter: ObservableObject {
     @Published var state: CharacterListViewState
     @Published var characters: [Character] = []
 
+    private var searchTask: DispatchWorkItem?
+
     init(state: CharacterListViewState = .idle, provider: CharacterListProvider) {
         self.state = state
         self.provider = provider
@@ -27,17 +29,6 @@ class CharacterListPresenter: ObservableObject {
     func initLoad() {
         guard characters.isEmpty else { return }
         self.reload()
-    }
-
-    func loadNextPageIfNeed(_ lastItemShown: Character) {
-        guard shouldFetchNextPage(lastItemShown) else { return }
-        Task {
-            do {
-                update(content: try await provider.fetchNextPage())
-            } catch {
-                self.state = .fail(error)
-            }
-        }
     }
 
     func reload() {
@@ -52,6 +43,40 @@ class CharacterListPresenter: ObservableObject {
         }
     }
 
+    func loadNextPageIfNeed(_ lastItemShown: Character) {
+        guard case .idle = state, shouldFetchNextPage(lastItemShown) else { return }
+        state = .loading
+        Task {
+            do {
+                update(content: try await provider.fetchNextPage())
+            } catch {
+                update(state: .fail(error))
+            }
+        }
+    }
+
+    func search(change keywords: String) {
+
+        searchTask?.cancel()
+        searchTask = nil
+
+        let task = DispatchWorkItem { [weak self] in
+            self?.search(keywords: keywords)
+        }
+
+        searchTask = task
+        DispatchQueue.main.asyncAfter(deadline: DispatchTime.now() + 0.75, execute: task)
+    }
+
+    private func search(keywords: String) {
+        Task {
+            do {
+                update(content: try await self.provider.search(keywords: keywords) )
+            } catch {
+                update(state: .fail(error))
+            }
+        }
+    }
 }
 
 extension CharacterListPresenter {
@@ -64,10 +89,12 @@ extension CharacterListPresenter {
         return true
     }
 
-    private func update(content: [Character]) {
+    private func update(content: [Character]? = nil, state: CharacterListViewState = .idle) {
         DispatchQueue.main.async {
-            self.characters.append(contentsOf: content)
-            self.state = .idle
+            if let content {
+                self.characters.append(contentsOf: content)
+            }
+            self.state = state
         }
     }
 

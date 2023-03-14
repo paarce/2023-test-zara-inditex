@@ -11,9 +11,11 @@ import SwiftUI
 struct RickyMortyInditexApp: App {
     var body: some Scene {
         WindowGroup {
-            CharacterListView(
-                presenter: .init(provider: CharacterListProviderImpl(remoteService: CharacterRemoteServiceImpl()))
-            )
+            NavigationView {
+                CharacterListView(
+                    presenter: .init(provider: CharacterListProviderImpl(remoteService: CharacterRemoteServiceImpl()))
+                )
+            }
         }
     }
 }

@@ -33,7 +33,10 @@ struct CharacterListView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .onAppear(perform: presenter.initLoad)
-
+        .searchable(text: $searchText)
+        .onChange(of: searchText) { keywords in
+            self.presenter.search(change: keywords)
+        }
     }
 
     private var gridView: some View {
@@ -49,17 +52,13 @@ struct CharacterListView: View {
     }
 
     private func gridCell(_ character: Character, width: CGFloat) -> some View {
-
-        ComicItemView(character: character, width: width)
-            .onAppear(perform: { presenter.loadNextPageIfNeed(character) })
-
-//        NavigationLink(
-//            destination: presenter.router.makeDetailView(for: Character),
-//            label: {
-//                ComicItemView(Character: Character, width: width)
-//                    .onAppear(perform: { presenter.loadNextPageIfNeed(Character) })
-//            }
-//        )
+        NavigationLink(
+            destination: EmptyView(),
+            label: {
+                CharacterItemView(character: character, width: width)
+                    .onAppear(perform: { presenter.loadNextPageIfNeed(character) })
+            }
+        )
     }
 }
 
@@ -71,7 +70,7 @@ struct CharacterListView_Previews: PreviewProvider {
     }
 }
 
-struct ComicItemView: View {
+struct CharacterItemView: View {
     let character: Character
     let width: CGFloat
     private let height: CGFloat = 200
@@ -95,6 +94,5 @@ struct ComicItemView: View {
 
         }
         .frame(width: width, height: height)
-
     }
 }

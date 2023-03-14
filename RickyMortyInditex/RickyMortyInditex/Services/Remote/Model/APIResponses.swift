@@ -22,7 +22,7 @@ struct Info: Decodable {
 extension Info {
     var nextPageIndex: Int? {
         guard let strNextPage = self.next, let url = URLComponents(string: strNextPage),
-            let nextPageVal = url.queryItems?.first(where: { $0.name == strNextPage })?.value
+            let nextPageVal = url.queryItems?.first(where: { $0.name == "page" })?.value
         else { return nil }
         return Int(nextPageVal)
     }
